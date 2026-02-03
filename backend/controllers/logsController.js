@@ -78,8 +78,8 @@ function buildTimestampQuery(startDate, endDate) {
 
 function buildRangeQuery(min, max) {
   const query = {};
-  if (min) query.$gte = Number(min || 0);
-  if (max) query.$lte = Number(max || 999999);
+  query.$gte = Number(min || 0);
+  query.$lte = Number(max || 999999);
   return query;
 }
 
@@ -126,7 +126,7 @@ function buildQuery(filters) {
   }
 
   const responseTimeQuery = buildRangeQuery(minResponseTime, maxResponseTime);
-  if (responseTimeQuery) {
+  if (responseTimeQuery !== null) {
     query['response.timeMs'] = responseTimeQuery;
   }
 
