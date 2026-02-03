@@ -1,7 +1,9 @@
 import Log from '../models/Log.js';
 import mongoose from 'mongoose';
 
-const VALID_ACTIONS = [
+// ------ Constants ------
+
+const VALID_ACTIONS = Object.freeze([
   'labOrder',
   'labResult',
   'receive',
@@ -16,34 +18,34 @@ const VALID_ACTIONS = [
   'getTransaction',
   'analyzerResult',
   'analyzerRequest',
-];
+]);
 
-function isValidAction(action) {
-  return !action || (Array.isArray(action)
-    ? action.every((a) => VALID_ACTIONS.includes(a))
-    : VALID_ACTIONS.includes(action));
-}
+// ------ Validators ------
 
-function isValidDate(dateString) {
-  if (!dateString) return true;
-  const date = new Date(dateString);
-  return !isNaN(date.getTime());
-}
+const validators = {
+  action(action) {
+    if (!action) return true;
+    const actions = Array.isArray(action) ? action : [action];
+    return actions.every((a) => VALID_ACTIONS.includes(a));
+  },
 
-// Validate for mongoose ObjectId
-function isValidObjectId(id) {
-  if (!id) return true;
-  if (Array.isArray(id)) {
-    return id.every((i) => mongoose.Types.ObjectId.isValid(i));
-  }
-  return mongoose.Types.ObjectId.isValid(id);
-}
+  date(dateString) {
+    if (!dateString) return true;
+    return !isNaN(new Date(dateString).getTime());
+  },
 
-function isValidResponseTime(value) {
-  if (!value) return true;
-  if (isNaN(value)) return false; // Not a number
-  return Number(value) >= 0; // Non-negative
-}
+  objectId(id) {
+    if (!id) return true;
+    const ids = Array.isArray(id) ? id : [id];
+    return ids.every((i) => mongoose.Types.ObjectId.isValid(i));
+  },
+
+  responseTime(value) {
+    if (!value) return true;
+    const num = Number(value);
+    return !isNaN(num) && num >= 0;
+  },
+};
 
 // Build query object for mongodb logs based on filters
 function buildQuery({ action, startDate, endDate, userId, statusCode, minResponseTime, maxResponseTime, labNumber }) {
@@ -111,34 +113,44 @@ function buildQuery({ action, startDate, endDate, userId, statusCode, minRespons
   return query;
 }
 
+// ------ Validate Request Query ------
+
+function validateQueryParams(query) {
+  const { action, startDate, endDate, userId, minResponseTime, maxResponseTime } =
+    query;
+
+  if (!validators.action(action)) {
+    return 'Invalid action parameter';
+  }
+
+  if (!validators.date(startDate) || !validators.date(endDate)) {
+    return 'Invalid date format';
+  }
+
+  if (!validators.objectId(userId)) {
+    return 'Invalid userId format';
+  }
+
+  if (
+    !validators.responseTime(minResponseTime) ||
+    !validators.responseTime(maxResponseTime)
+  ) {
+    return 'Invalid response time value';
+  }
+
+  return null;
+}
+
 // Get all logs
 export async function getAllLogs(req, res) {
-  const { action, startDate, endDate, userId, statusCode, minResponseTime, maxResponseTime, labNumber } = req.query;
-
-  console.log('Received log query params:', req.query);
-
-  // Validate query parameters
-  if (!isValidAction(action)) {
-    return res.status(400).json({ message: 'Invalid action parameter' });
-  }
-
-  if (!isValidDate(startDate) || !isValidDate(endDate)) {
-    return res.status(400).json({ message: 'Invalid date format' });
-  }
-
-  if (!isValidObjectId(userId)) {
-    return res.status(400).json({ message: 'Invalid userId format' });
-  }
-
-  if (!isValidResponseTime(minResponseTime) || !isValidResponseTime(maxResponseTime)) {
-    return res.status(400).json({ message: 'Invalid response time value' });
+  const validationError = validateQueryParams(req.query);
+  if (validationError) {
+    return res.status(400).json({ message: validationError });
   }
 
   // Fetch logs
   try {
-    const query = buildQuery({ action, startDate, endDate, userId, statusCode, minResponseTime, maxResponseTime, labNumber });
-
-    console.log('Log Query:', query);
+    const query = buildQuery(req.query);
 
     // Fetch all logs and populate user details
     const logs = await Log.find(query).populate('userId', '_id prefix firstname lastname').lean();
