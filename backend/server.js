@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 
 import logsRoutes from './routes/logsRoutes.js';
 import { connectDB } from './config/db.js';
+import './models/index.js';
 
 dotenv.config();
 
