@@ -19,7 +19,9 @@ const VALID_ACTIONS = [
 ];
 
 function isValidAction(action) {
-  return !action || VALID_ACTIONS.includes(action);
+  return !action || (Array.isArray(action)
+    ? action.every((a) => VALID_ACTIONS.includes(a))
+    : VALID_ACTIONS.includes(action));
 }
 
 function isValidDate(dateString) {
@@ -31,6 +33,9 @@ function isValidDate(dateString) {
 // Validate for mongoose ObjectId
 function isValidObjectId(id) {
   if (!id) return true;
+  if (Array.isArray(id)) {
+    return id.every((i) => mongoose.Types.ObjectId.isValid(i));
+  }
   return mongoose.Types.ObjectId.isValid(id);
 }
 
@@ -46,7 +51,8 @@ function buildQuery({ action, startDate, endDate, userId, statusCode, minRespons
 
   // Action filtering
   if (action) {
-    query.action = action;
+    const actions = Array.isArray(action) ? action : [action];
+    query.action = actions.length === 1 ? actions[0] : { $in: actions };
   }
 
   // Timestamp filtering
@@ -67,12 +73,15 @@ function buildQuery({ action, startDate, endDate, userId, statusCode, minRespons
     };
   }
 
+  // Handle single or multiple userIds
   if (userId) {
-    query.userId = userId;
+    const userIds = Array.isArray(userId) ? userId : [userId];
+    query.userId = userIds.length === 1 ? userIds[0] : { $in: userIds };
   }
 
   if (statusCode) {
-    query['response.statusCode'] = String(statusCode);
+    const statusCodes = Array.isArray(statusCode) ? statusCode : [statusCode];
+    query['response.statusCode'] = statusCodes.length === 1 ? Number(statusCodes[0]) : { $in: statusCodes.map(Number) };
   }
 
   // Response time filtering
@@ -87,9 +96,16 @@ function buildQuery({ action, startDate, endDate, userId, statusCode, minRespons
     query['response.timeMs'].$lte = 999999;
   }
 
+  // Handle single or multiple labNumbers (case-insensitive partial match)
   if (labNumber) {
-    // Case-insensitive partial match for any labnumber in the array
-    query.labnumber = { $regex: labNumber, $options: 'i' };
+    const labNumbers = Array.isArray(labNumber) ? labNumber : [labNumber];
+    if (labNumbers.length === 1) {
+      query.labnumber = { $regex: labNumbers[0], $options: 'i' };
+    } else {
+      query.$or = labNumbers.map((ln) => ({
+        labnumber: { $regex: ln, $options: 'i' },
+      }));
+    }
   }
 
   return query;
@@ -98,6 +114,8 @@ function buildQuery({ action, startDate, endDate, userId, statusCode, minRespons
 // Get all logs
 export async function getAllLogs(req, res) {
   const { action, startDate, endDate, userId, statusCode, minResponseTime, maxResponseTime, labNumber } = req.query;
+
+  console.log('Received log query params:', req.query);
 
   // Validate query parameters
   if (!isValidAction(action)) {
@@ -120,7 +138,7 @@ export async function getAllLogs(req, res) {
   try {
     const query = buildQuery({ action, startDate, endDate, userId, statusCode, minResponseTime, maxResponseTime, labNumber });
 
-    console.log('Query:', JSON.stringify(query, null, 2)); // Add this
+    console.log('Log Query:', query);
 
     // Fetch all logs and populate user details
     const logs = await Log.find(query).populate('userId', '_id prefix firstname lastname').lean();
