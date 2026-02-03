@@ -47,67 +47,91 @@ const validators = {
   },
 };
 
-// Build query object for mongodb logs based on filters
-function buildQuery({ action, startDate, endDate, userId, statusCode, minResponseTime, maxResponseTime, labNumber }) {
-  const query = {};
+// ------ Query Builders ------
 
-  // Action filtering
-  if (action) {
-    const actions = Array.isArray(action) ? action : [action];
-    query.action = actions.length === 1 ? actions[0] : { $in: actions };
-  }
+function toArray(value) {
+  return Array.isArray(value) ? value : [value];
+}
 
-  // Timestamp filtering
+function buildSingleOrInQuery(value, transform = (v) => v) {
+  const values = toArray(value).map(transform);
+  return values.length === 1 ? values[0] : { $in: values };
+}
+
+function buildTimestampQuery(startDate, endDate) {
   if (startDate || endDate) {
-    query.timestamp = {};
-    if (startDate) query.timestamp.$gte = new Date(startDate);
-    if (endDate) query.timestamp.$lte = new Date(endDate);
-  } 
-  else {
-    // Default to today
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
-    query.timestamp = {
-      $gte: todayStart,
-      $lte: todayEnd,
-    };
+    const query = {};
+    if (startDate) query.$gte = new Date(startDate);
+    if (endDate) query.$lte = new Date(endDate);
+    return query;
   }
 
-  // Handle single or multiple userIds
+  // Default to today
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+
+  return { $gte: todayStart, $lte: todayEnd };
+}
+
+function buildRangeQuery(min, max) {
+  const query = {};
+  if (min) query.$gte = Number(min || 0);
+  if (max) query.$lte = Number(max || 999999);
+  return query;
+}
+
+function buildLabNumberQuery(labNumber) {
+  const labNumbers = toArray(labNumber);
+
+  if (labNumbers.length === 1) {
+    return { labnumber: { $regex: labNumbers[0], $options: 'i' } };
+  }
+
+  return {
+    $or: labNumbers.map((ln) => ({
+      labnumber: { $regex: ln, $options: 'i' },
+    })),
+  };
+}
+
+function buildQuery(filters) {
+  const {
+    action,
+    startDate,
+    endDate,
+    userId,
+    statusCode,
+    minResponseTime,
+    maxResponseTime,
+    labNumber,
+  } = filters;
+
+  const query = {
+    timestamp: buildTimestampQuery(startDate, endDate),
+  };
+
+  if (action) {
+    query.action = buildSingleOrInQuery(action);
+  }
+
   if (userId) {
-    const userIds = Array.isArray(userId) ? userId : [userId];
-    query.userId = userIds.length === 1 ? userIds[0] : { $in: userIds };
+    query.userId = buildSingleOrInQuery(userId);
   }
 
   if (statusCode) {
-    const statusCodes = Array.isArray(statusCode) ? statusCode : [statusCode];
-    query['response.statusCode'] = statusCodes.length === 1 ? Number(statusCodes[0]) : { $in: statusCodes.map(Number) };
+    query['response.statusCode'] = buildSingleOrInQuery(statusCode, Number);
   }
 
-  // Response time filtering
-  if (minResponseTime || maxResponseTime) {
-    query['response.timeMs'] = {};
-    if (minResponseTime) query['response.timeMs'].$gte = Number(minResponseTime);
-    if (maxResponseTime) query['response.timeMs'].$lte = Number(maxResponseTime);
-  }
-  else {
-    query['response.timeMs'] = {};
-    query['response.timeMs'].$gte = 0;
-    query['response.timeMs'].$lte = 999999;
+  const responseTimeQuery = buildRangeQuery(minResponseTime, maxResponseTime);
+  if (responseTimeQuery) {
+    query['response.timeMs'] = responseTimeQuery;
   }
 
-  // Handle single or multiple labNumbers (case-insensitive partial match)
   if (labNumber) {
-    const labNumbers = Array.isArray(labNumber) ? labNumber : [labNumber];
-    if (labNumbers.length === 1) {
-      query.labnumber = { $regex: labNumbers[0], $options: 'i' };
-    } else {
-      query.$or = labNumbers.map((ln) => ({
-        labnumber: { $regex: ln, $options: 'i' },
-      }));
-    }
+    Object.assign(query, buildLabNumberQuery(labNumber));
   }
 
   return query;
@@ -141,27 +165,35 @@ function validateQueryParams(query) {
   return null;
 }
 
-// Get all logs
+// ------ Transform Logs Response ------
+
+function transformLogResponse(log) {
+  const { userId, ...rest } = log;
+  return { ...rest, user: userId };
+}
+
+// ------ Controllers ------
+
 export async function getAllLogs(req, res) {
   const validationError = validateQueryParams(req.query);
   if (validationError) {
     return res.status(400).json({ message: validationError });
   }
 
-  // Fetch logs
   try {
     const query = buildQuery(req.query);
+    console.log('Log Query:', query);
 
-    // Fetch all logs and populate user details
-    const logs = await Log.find(query).populate('userId', '_id prefix firstname lastname').lean();
+    const logs = await Log.find(query)
+      .populate('userId', '_id prefix firstname lastname')
+      .lean();
 
-    const result = logs.map(({userId, ...rest}) => ({
-      ...rest,
-      user: userId,
-    }));
+    const result = logs.map(transformLogResponse);
 
-    res.status(200).json(result);
+    return res.status(200).json(result);
   } catch (error) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    return res
+      .status(500)
+      .json({ message: 'Server Error', error: error.message });
   }
 }
