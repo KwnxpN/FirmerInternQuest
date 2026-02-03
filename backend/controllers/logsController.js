@@ -1,4 +1,5 @@
 import Log from '../models/Log.js';
+import mongoose from 'mongoose';
 
 const VALID_ACTIONS = [
   'labOrder',
@@ -27,8 +28,14 @@ function isValidDate(dateString) {
   return !isNaN(date.getTime());
 }
 
+// Validate for mongoose ObjectId
+function isValidObjectId(id) {
+  if (!id) return true;
+  return mongoose.Types.ObjectId.isValid(id);
+}
+
 // Build query object for mongodb logs based on filters
-function buildQuery({ action, startDate, endDate }) {
+function buildQuery({ action, startDate, endDate, userId }) {
   const query = {};
 
   // Action filtering
@@ -53,12 +60,16 @@ function buildQuery({ action, startDate, endDate }) {
     query.timestamp.$lte = todayEnd; // End of today
   }
 
+  if (userId) {
+    query.userId = userId;
+  }
+
   return query;
 }
 
 // Get all logs
 export async function getAllLogs(req, res) {
-  const { action, startDate, endDate } = req.query;
+  const { action, startDate, endDate, userId } = req.query;
 
   // Validate query parameters
   if (!isValidAction(action)) {
@@ -69,9 +80,13 @@ export async function getAllLogs(req, res) {
     return res.status(400).json({ message: 'Invalid date format' });
   }
 
+  if (!isValidObjectId(userId)) {
+    return res.status(400).json({ message: 'Invalid userId format' });
+  }
+
   // Fetch logs
   try {
-    const query = buildQuery({ action, startDate, endDate });
+    const query = buildQuery({ action, startDate, endDate, userId });
 
     // Fetch all logs and populate user details
     const logs = await Log.find(query).populate('userId', '_id prefix firstname lastname').lean();
