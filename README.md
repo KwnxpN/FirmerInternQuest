@@ -1,0 +1,1 @@
+This is Mini Project for Firmer Intership using MERN stack making by Kawin Isaramala.
