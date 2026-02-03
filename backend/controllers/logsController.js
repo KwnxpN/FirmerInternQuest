@@ -34,8 +34,14 @@ function isValidObjectId(id) {
   return mongoose.Types.ObjectId.isValid(id);
 }
 
+function isValidResponseTime(value) {
+  if (!value) return true;
+  if (isNaN(value)) return false; // Not a number
+  return Number(value) >= 0; // Non-negative
+}
+
 // Build query object for mongodb logs based on filters
-function buildQuery({ action, startDate, endDate, userId }) {
+function buildQuery({ action, startDate, endDate, userId, statusCode, minResponseTime, maxResponseTime, labNumber }) {
   const query = {};
 
   // Action filtering
@@ -48,20 +54,42 @@ function buildQuery({ action, startDate, endDate, userId }) {
     query.timestamp = {};
     if (startDate) query.timestamp.$gte = new Date(startDate);
     if (endDate) query.timestamp.$lte = new Date(endDate);
-  }
-
-  if (!startDate && !endDate) {
-    query.timestamp = {};
+  } 
+  else {
+    // Default to today
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const todayEnd = new Date();
     todayEnd.setHours(23, 59, 59, 999);
-    query.timestamp.$gte = todayStart; // Start of today
-    query.timestamp.$lte = todayEnd; // End of today
+    query.timestamp = {
+      $gte: todayStart,
+      $lte: todayEnd,
+    };
   }
 
   if (userId) {
     query.userId = userId;
+  }
+
+  if (statusCode) {
+    query['response.statusCode'] = String(statusCode);
+  }
+
+  // Response time filtering
+  if (minResponseTime || maxResponseTime) {
+    query['response.timeMs'] = {};
+    if (minResponseTime) query['response.timeMs'].$gte = Number(minResponseTime);
+    if (maxResponseTime) query['response.timeMs'].$lte = Number(maxResponseTime);
+  }
+  else {
+    query['response.timeMs'] = {};
+    query['response.timeMs'].$gte = 0;
+    query['response.timeMs'].$lte = 999999;
+  }
+
+  if (labNumber) {
+    // Case-insensitive partial match for any labnumber in the array
+    query.labnumber = { $regex: labNumber, $options: 'i' };
   }
 
   return query;
@@ -69,7 +97,7 @@ function buildQuery({ action, startDate, endDate, userId }) {
 
 // Get all logs
 export async function getAllLogs(req, res) {
-  const { action, startDate, endDate, userId } = req.query;
+  const { action, startDate, endDate, userId, statusCode, minResponseTime, maxResponseTime, labNumber } = req.query;
 
   // Validate query parameters
   if (!isValidAction(action)) {
@@ -84,9 +112,15 @@ export async function getAllLogs(req, res) {
     return res.status(400).json({ message: 'Invalid userId format' });
   }
 
+  if (!isValidResponseTime(minResponseTime) || !isValidResponseTime(maxResponseTime)) {
+    return res.status(400).json({ message: 'Invalid response time value' });
+  }
+
   // Fetch logs
   try {
-    const query = buildQuery({ action, startDate, endDate, userId });
+    const query = buildQuery({ action, startDate, endDate, userId, statusCode, minResponseTime, maxResponseTime, labNumber });
+
+    console.log('Query:', JSON.stringify(query, null, 2)); // Add this
 
     // Fetch all logs and populate user details
     const logs = await Log.find(query).populate('userId', '_id prefix firstname lastname').lean();
