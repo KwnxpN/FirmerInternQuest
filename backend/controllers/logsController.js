@@ -226,7 +226,10 @@ function validateQueryParams(query) {
 export async function getAllLogs(req, res) {
   const validationError = validateQueryParams(req.query);
   if (validationError) {
-    return res.status(400).json({ message: validationError });
+    return res.status(400).json({ 
+      success: false,
+      message: validationError
+     });
   }
 
   try {
@@ -237,34 +240,75 @@ export async function getAllLogs(req, res) {
 
     const pipeline = [
       { $match: query },
-      {
-        $addFields: {
-          actionSortIndex: { $indexOfArray: [VALID_ACTIONS, '$action'] },
-        },
-      },
-      ...(sort ? [{ $sort: sort }] : []),
-      { $skip: pagination.skip },
-      { $limit: pagination.limit },
+
       {
         $lookup: {
           from: 'users',
           localField: 'userId',
           foreignField: '_id',
           as: 'user',
-          pipeline: [{ $project: { _id: 1, prefix: 1, firstname: 1, lastname: 1, isDel: 1 } }],
-        }, // Populate user details
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                prefix: 1,
+                firstname: 1,
+                lastname: 1,
+                isDel: 1,
+              },
+            },
+          ],
+        },
       },
-      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
-      { $match: { "user.isDel": false } },
-      { $project: { actionSortIndex: 0, userId: 0 } }, // Remove the temporary sort field, userId
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: false } }, // Exclude logs with no user
+      { $match: { 'user.isDel': false } },
+
+      {
+        // Faceted search to get data and total count
+        $facet: {
+          data: [
+            {
+              $addFields: {
+                actionSortIndex: {
+                  $indexOfArray: [VALID_ACTIONS, '$action'],
+                },
+              },
+            },
+            ...(sort ? [{ $sort: sort }] : []),
+            { $skip: pagination.skip },
+            { $limit: pagination.limit },
+            { $project: { actionSortIndex: 0, userId: 0 } },
+          ],
+          totalCount: [{ $count: 'count' }],
+        },
+      },
     ];
 
-    const logs = await Log.aggregate(pipeline);
+    const result = await Log.aggregate(pipeline);
 
-    return res.status(200).json(logs);
+    const logs = result[0].data;
+    const totalCount = result[0].totalCount[0]?.count ?? 0;
+
+    return res.status(200).json({
+      success: true,
+      count: logs.length,
+      totalCount,
+      data: logs,
+      pagination: {
+        page: pagination.page,
+        limit: pagination.limit,
+        totalPages: Math.ceil(totalCount / pagination.limit),
+        hasNext: pagination.page * pagination.limit < totalCount,
+        hasPrev: pagination.page > 1,
+      },
+    });
   } catch (error) {
     return res
       .status(500)
-      .json({ message: 'Server Error', error: error.message });
+      .json({
+        success: false,
+        message: 'Server Error: Unable to retrieve logs',
+        error: error.message,
+      });
   }
 }
