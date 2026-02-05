@@ -45,6 +45,16 @@ const validators = {
     const num = Number(value);
     return !isNaN(num) && num >= 0;
   },
+
+  pagination(page, limit) {
+    if (!page && !limit) return true;
+    const p = Number(page);
+    const l = Number(limit);
+    return (
+      (!page || (Number.isInteger(p) && p > 0)) &&
+      (!limit || (Number.isInteger(l) && l > 0))
+    );
+  }
 };
 
 // ------ Query Builders ------
@@ -97,6 +107,13 @@ function buildLabNumberQuery(labNumber) {
   };
 }
 
+function buildPagination(page, limit) {
+  const p = page ? Number(page) : 1;
+  const l = limit ? Number(limit) : 20;
+  const skip = (p - 1) * l;
+  return { page: p, limit: l, skip };
+}
+
 function buildQuery(filters) {
   const {
     action,
@@ -107,11 +124,15 @@ function buildQuery(filters) {
     minResponseTime,
     maxResponseTime,
     labNumber,
+    page,
+    limit,
   } = filters;
 
   const query = {
     timestamp: buildTimestampQuery(startDate, endDate),
   };
+
+  const pagination = buildPagination(page, limit);
 
   if (action) {
     query.action = buildSingleOrInQuery(action);
@@ -134,13 +155,13 @@ function buildQuery(filters) {
     Object.assign(query, buildLabNumberQuery(labNumber));
   }
 
-  return query;
+  return { query, pagination };
 }
 
 // ------ Validate Request Query ------
 
 function validateQueryParams(query) {
-  const { action, startDate, endDate, userId, minResponseTime, maxResponseTime } =
+  const { action, startDate, endDate, userId, minResponseTime, maxResponseTime, page, limit } =
     query;
 
   if (!validators.action(action)) {
@@ -162,6 +183,10 @@ function validateQueryParams(query) {
     return 'Invalid response time value';
   }
 
+  if (!validators.pagination(page, limit)) {
+    return 'Invalid pagination parameters';
+  }
+
   return null;
 }
 
@@ -181,11 +206,14 @@ export async function getAllLogs(req, res) {
   }
 
   try {
-    const query = buildQuery(req.query);
+    const { query, pagination } = buildQuery(req.query);
     console.log('Log Query:', query);
+    console.log('Pagination:', pagination);
 
     const logs = await Log.find(query)
       .populate('userId', '_id prefix firstname lastname')
+      .skip(pagination.skip)
+      .limit(pagination.limit)
       .lean();
 
     const result = logs.map(transformLogResponse);
