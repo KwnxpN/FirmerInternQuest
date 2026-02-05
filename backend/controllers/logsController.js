@@ -166,7 +166,7 @@ function buildQuery(filters) {
   }
 
   if (userId) {
-    query.userId = buildSingleOrInQuery(userId);
+    query.userId = buildSingleOrInQuery(userId, (id) => new mongoose.Types.ObjectId(id));
   }
 
   if (statusCode) {
@@ -251,11 +251,12 @@ export async function getAllLogs(req, res) {
           localField: 'userId',
           foreignField: '_id',
           as: 'user',
-          pipeline: [{ $project: { _id: 1, prefix: 1, firstname: 1, lastname: 1 } }],
+          pipeline: [{ $project: { _id: 1, prefix: 1, firstname: 1, lastname: 1, isDel: 1 } }],
         }, // Populate user details
       },
       { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
-      { $project: { actionSortIndex: 0 } }, // Remove the temporary sort field
+      { $match: { "user.isDel": false } },
+      { $project: { actionSortIndex: 0, userId: 0 } }, // Remove the temporary sort field, userId
     ];
 
     const logs = await Log.aggregate(pipeline);
