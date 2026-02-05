@@ -1,5 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import cors from 'cors';
 
 import logsRoutes from './routes/logsRoutes.js';
 import usersRoutes from './routes/usersRoutes.js';
@@ -14,6 +15,9 @@ const PORT = process.env.PORT || 5001;
 connectDB();
 
 app.use(express.json());
+app.use(cors({
+  origin: 'http://localhost:5173',
+}));
 
 app.use('/api/logs', logsRoutes);
 app.use('/api/users', usersRoutes);
