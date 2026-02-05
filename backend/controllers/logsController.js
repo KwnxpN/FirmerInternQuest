@@ -54,7 +54,17 @@ const validators = {
       (!page || (Number.isInteger(p) && p > 0)) &&
       (!limit || (Number.isInteger(l) && l > 0))
     );
-  }
+  },
+
+  sort(sortBy, sortOrder) {
+    if (!sortBy && !sortOrder) return true;
+    const validFields = ['timestamp', 'action', 'timeMs'];
+    const validOrders = ['asc', 'desc'];
+
+    if (sortBy && !validFields.includes(sortBy)) return false;
+    if (sortOrder && !validOrders.includes(sortOrder)) return false;
+    return true;
+  },
 };
 
 // ------ Query Builders ------
@@ -109,9 +119,22 @@ function buildLabNumberQuery(labNumber) {
 
 function buildPagination(page, limit) {
   const p = page ? Number(page) : 1;
-  const l = limit ? Number(limit) : 20;
+  const l = limit ? Number(limit) : 50;
   const skip = (p - 1) * l;
   return { page: p, limit: l, skip };
+}
+
+function buildSort(sortBy, sortOrder) {
+  if (sortBy) {
+    const order = sortOrder === 'desc' ? -1 : 1;
+    if (sortBy === 'timeMs') {
+      return { 'response.timeMs': order };
+    }
+    if (sortBy === 'action') {
+      return { actionSortIndex: order };
+    }
+    return { [sortBy]: order };
+  }
 }
 
 function buildQuery(filters) {
@@ -126,6 +149,8 @@ function buildQuery(filters) {
     labNumber,
     page,
     limit,
+    sortBy,
+    sortOrder,
   } = filters;
 
   const query = {
@@ -133,6 +158,8 @@ function buildQuery(filters) {
   };
 
   const pagination = buildPagination(page, limit);
+
+  const sort = buildSort(sortBy, sortOrder);
 
   if (action) {
     query.action = buildSingleOrInQuery(action);
@@ -155,13 +182,13 @@ function buildQuery(filters) {
     Object.assign(query, buildLabNumberQuery(labNumber));
   }
 
-  return { query, pagination };
+  return { query, pagination, sort };
 }
 
 // ------ Validate Request Query ------
 
 function validateQueryParams(query) {
-  const { action, startDate, endDate, userId, minResponseTime, maxResponseTime, page, limit } =
+  const { action, startDate, endDate, userId, minResponseTime, maxResponseTime, page, limit, sortBy, sortOrder } =
     query;
 
   if (!validators.action(action)) {
@@ -187,14 +214,11 @@ function validateQueryParams(query) {
     return 'Invalid pagination parameters';
   }
 
+  if (!validators.sort(sortBy, sortOrder)) {
+    return 'Invalid sorting parameters';
+  }
+
   return null;
-}
-
-// ------ Transform Logs Response ------
-
-function transformLogResponse(log) {
-  const { userId, ...rest } = log;
-  return { ...rest, user: userId };
 }
 
 // ------ Controllers ------
@@ -206,19 +230,37 @@ export async function getAllLogs(req, res) {
   }
 
   try {
-    const { query, pagination } = buildQuery(req.query);
+    const { query, pagination, sort } = buildQuery(req.query);
     console.log('Log Query:', query);
     console.log('Pagination:', pagination);
+    console.log('Sort:', sort);
 
-    const logs = await Log.find(query)
-      .populate('userId', '_id prefix firstname lastname')
-      .skip(pagination.skip)
-      .limit(pagination.limit)
-      .lean();
+    const pipeline = [
+      { $match: query },
+      {
+        $addFields: {
+          actionSortIndex: { $indexOfArray: [VALID_ACTIONS, '$action'] },
+        },
+      },
+      ...(sort ? [{ $sort: sort }] : []),
+      { $skip: pagination.skip },
+      { $limit: pagination.limit },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user',
+          pipeline: [{ $project: { _id: 1, prefix: 1, firstname: 1, lastname: 1 } }],
+        }, // Populate user details
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      { $project: { actionSortIndex: 0 } }, // Remove the temporary sort field
+    ];
 
-    const result = logs.map(transformLogResponse);
+    const logs = await Log.aggregate(pipeline);
 
-    return res.status(200).json(result);
+    return res.status(200).json(logs);
   } catch (error) {
     return res
       .status(500)
