@@ -1,6 +1,29 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* width */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #b9b9b9;
+  border-radius: 0 12px 12px 0
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #1f2e49;
+  border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #203a6e;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

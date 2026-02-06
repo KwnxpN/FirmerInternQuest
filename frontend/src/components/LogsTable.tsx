@@ -1,6 +1,16 @@
 import { useFetchLogs } from '@/api.ts'
-import { formatDateToDisplay, formatUserFullName } from "@/utils/formats.ts";
-import { getStatusCodeColor, getActionColor, getMethodColor, getMethodTextColor } from '@/utils/colors';
+import {
+    formatDateToDisplay,
+    formatUserFullName
+} from "@/utils/formats.ts";
+import {
+    getStatusCodeColor,
+    getActionColor,
+    getMethodColor,
+    getMethodTextColor,
+    getActionTextColor,
+    getStatusCodeTextColor
+} from '@/utils/colors';
 
 import {
     Table,
@@ -16,41 +26,65 @@ function LogsTable() {
 
 
     return (
-        <div className='rounded-xl border overflow-hidden'>
-            <Table>
-                <TableHeader className='bg-[#162033]'>
-                    <TableRow className='pointer-events-none'>
-                        <TableHead className='text-[#92a1b6]'>User</TableHead>
-                        <TableHead className='text-[#92a1b6]'>Endpoint</TableHead>
-                        <TableHead className='text-[#92a1b6]'>Method</TableHead>
-                        <TableHead className='text-[#92a1b6]'>Timestamp</TableHead>
-                        <TableHead className='text-[#92a1b6]'>Labnumber</TableHead>
-                        <TableHead className='text-[#92a1b6]'>Action</TableHead>
-                        <TableHead className='text-[#92a1b6]'>Status</TableHead>
-                        <TableHead className='text-[#92a1b6]'>Message</TableHead>
-                        <TableHead className='text-[#92a1b6]'>Time Response</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {logs && logs.data && logs.data.map((log) => (
-                        <TableRow key={log._id}>
-                            <TableCell className="font-medium text-[#d8dadd]">{formatUserFullName(log.user?.prefix || "", log.user?.firstname || "", log.user?.lastname || "")}</TableCell>
-                            <TableCell className='text-[#637289]'>{log.request.endpoint}</TableCell>
-                            <TableCell>
-                                <div className={`${getMethodColor(log.request.method)}` + ' px-2 py-0.5 rounded-sm w-fit'}>
-                                    <span className={`${getMethodTextColor(log.request.method)}` + ' font-medium text-xs'}>{log.request.method}</span>
-                                </div>
-                            </TableCell>
-                            <TableCell>{formatDateToDisplay(log.timestamp)}</TableCell>
-                            <TableCell>{log.labnumber.join(", ")}</TableCell>
-                            <TableCell className={getActionColor(log.action)}>{log.action}</TableCell>
-                            <TableCell className={getStatusCodeColor(log.response.statusCode)}>{log.response.statusCode}</TableCell>
-                            <TableCell>{log.response.message}</TableCell>
-                            <TableCell>{log.response.timeMs}</TableCell>
+        <div className='rounded-xl border overflow-hidden  relative'>
+            <div className="overflow-y-auto max-h-[70vh]">
+                <Table className='border-separate border-spacing-0'>
+                    <TableHeader className='h-16'>
+                        <TableRow className='pointer-events-none'>
+                            <TableHead className='sticky top-0 z-20 bg-[#162033] text-[#92a1b6] font-bold pl-4'>User</TableHead>
+                            <TableHead className='sticky top-0 z-20 bg-[#162033] text-[#92a1b6] font-bold'>Endpoint</TableHead>
+                            <TableHead className='sticky top-0 z-20 bg-[#162033] text-[#92a1b6] font-bold'>Method</TableHead>
+                            <TableHead className='sticky top-0 z-20 bg-[#162033] text-[#92a1b6] font-bold'>Timestamp</TableHead>
+                            <TableHead className='sticky top-0 z-20 bg-[#162033] text-[#92a1b6] font-bold'>Labnumber</TableHead>
+                            <TableHead className='sticky top-0 z-20 bg-[#162033] text-[#92a1b6] font-bold'>Action</TableHead>
+                            <TableHead className='sticky top-0 z-20 bg-[#162033] text-[#92a1b6] font-bold'>Status</TableHead>
+                            <TableHead className='sticky top-0 z-20 bg-[#162033] text-[#92a1b6] font-bold'>Message</TableHead>
+                            <TableHead className='sticky top-0 z-20 bg-[#162033] text-[#92a1b6] font-bold'>Time Response</TableHead>
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody>
+                        {logs && logs.data && logs.data.map((log) => (
+                            <TableRow key={log._id} className='h-16'>
+                                <TableCell className="font-medium text-[#d8dadd] pl-4">
+                                    {formatUserFullName(log.user?.prefix || "", log.user?.firstname || "", log.user?.lastname || "")}
+                                </TableCell>
+                                <TableCell className='text-[#637289]'>{log.request.endpoint}</TableCell>
+                                <TableCell>
+                                    <div className={`${getMethodColor(log.request.method)}` +
+                                        ' px-2 py-0.5 rounded-sm w-fit'}>
+                                        <span className={`${getMethodTextColor(log.request.method)}` + ' font-medium text-xs'}>
+                                            {log.request.method}
+                                        </span>
+                                    </div>
+                                </TableCell>
+                                <TableCell className='text-[#637289] whitespace-break-spaces'>{formatDateToDisplay(log.timestamp)}</TableCell>
+                                <TableCell className="text-[#137fec] whitespace-normal">
+                                    <div className="columns-4 gap-4">
+                                        {log.labnumber.join(", ")}
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className={`${getActionColor(log.action)}` + ' px-2 py-0.5 rounded-sm w-fit'}>
+                                        <span className={`${getActionTextColor(log.action)}` + ' font-medium text-xs'}>
+                                            {log.action}
+                                        </span>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className={`${getStatusCodeColor(log.response.statusCode)}` +
+                                        ' px-2 py-0.5 rounded-sm w-fit'}>
+                                        <span className={`${getStatusCodeTextColor(log.response.statusCode)}` + ' font-medium text-xs'}>
+                                            {log.response.statusCode}
+                                        </span>
+                                    </div>
+                                </TableCell>
+                                <TableCell className='text-[#94a3b8]'>{log.response.message}</TableCell>
+                                <TableCell className='text-[#637289] text-center'>{log.response.timeMs}ms</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
         </div>
     )
 }
