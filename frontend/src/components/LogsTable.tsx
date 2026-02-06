@@ -1,4 +1,3 @@
-import { useFetchLogs } from '@/api.ts'
 import {
     formatDateToDisplay,
     formatUserFullName
@@ -20,10 +19,14 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import type { LogResponse } from '@/types/log.type';
 
-function LogsTable() {
-    const { logs, isLoading, isError, setQueryParams } = useFetchLogs();
+interface LogsTableProps {
+  logs: LogResponse | null;
+  isLoading: boolean;
+}
 
+function LogsTable({ logs, isLoading }: LogsTableProps) {
 
     return (
         <div className='rounded-xl border overflow-hidden  relative'>
