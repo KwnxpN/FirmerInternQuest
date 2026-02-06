@@ -1,4 +1,5 @@
 import type { User } from "./user.type.ts";
+import type { ActionOrder } from "@/constants/actions";
 
 export interface Log {
     _id: string;
@@ -13,7 +14,7 @@ export interface Log {
         message: string;
         timeMs: number;
     };
-    action: string;
+    action: ActionOrder;
     user: User;
 }
 

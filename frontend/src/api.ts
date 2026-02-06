@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import type { LogQueryParams, LogResponse } from "./types/log.type";
-import type { UserResponse } from "./types/user.type";
+import type { LogQueryParams, LogResponse } from "./types/log.type.ts";
+import type { UserResponse } from "./types/user.type.ts";
 
-import { buildUrlSearchParams } from "./lib/utils";
+import { buildUrlSearchParams } from "./lib/utils.ts";
 
 const API_BASE_URL = "http://localhost:5001/api";
 

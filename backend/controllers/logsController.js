@@ -170,7 +170,7 @@ function buildQuery(filters) {
   }
 
   if (statusCode) {
-    query['response.statusCode'] = buildSingleOrInQuery(statusCode, Number);
+    query['response.statusCode'] = buildSingleOrInQuery(statusCode);
   }
 
   const responseTimeQuery = buildRangeQuery(minResponseTime, maxResponseTime);
@@ -242,45 +242,34 @@ export async function getAllLogs(req, res) {
       { $match: query },
 
       {
-        $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'user',
-          pipeline: [
-            {
-              $project: {
-                _id: 1,
-                prefix: 1,
-                firstname: 1,
-                lastname: 1,
-                isDel: 1,
-              },
-            },
-          ],
-        },
+      $lookup: {
+      from: 'users',
+      localField: 'userId',
+      foreignField: '_id',
+      as: 'user',
+      },
       },
       { $unwind: { path: '$user', preserveNullAndEmptyArrays: false } }, // Exclude logs with no user
       { $match: { 'user.isDel': false } },
 
       {
-        // Faceted search to get data and total count
-        $facet: {
-          data: [
-            {
-              $addFields: {
-                actionSortIndex: {
-                  $indexOfArray: [VALID_ACTIONS, '$action'],
-                },
-              },
-            },
-            ...(sort ? [{ $sort: sort }] : []),
-            { $skip: pagination.skip },
-            { $limit: pagination.limit },
-            { $project: { actionSortIndex: 0, userId: 0 } },
-          ],
-          totalCount: [{ $count: 'count' }],
+      // Faceted search to get data and total count
+      $facet: {
+        data: [
+        {
+          $addFields: {
+          actionSortIndex: {
+            $indexOfArray: [VALID_ACTIONS, '$action'],
+          },
+          },
         },
+        ...(sort ? [{ $sort: sort }] : []),
+        { $skip: pagination.skip },
+        { $limit: pagination.limit },
+        { $project: { actionSortIndex: 0, userId: 0, 'user.password': 0 } },
+        ],
+        totalCount: [{ $count: 'count' }],
+      },
       },
     ];
 

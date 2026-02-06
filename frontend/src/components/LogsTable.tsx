@@ -1,4 +1,6 @@
 import { useFetchLogs } from '@/api.ts'
+import { formatDateToDisplay, formatUserFullName } from "@/utils/formats.ts";
+import { getStatusCodeColor, getActionColor, getMethodColor, getMethodTextColor } from '@/utils/colors';
 
 import {
     Table,
@@ -14,36 +16,42 @@ function LogsTable() {
 
 
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Endpoint</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>Labnumber</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Message</TableHead>
-                    <TableHead>Time Response</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {logs && logs.data && logs.data.map((log) => (
-                    <TableRow key={log._id}>
-                        <TableCell className="font-medium">{log.user?.firstname}</TableCell>
-                        <TableCell>{log.request.endpoint}</TableCell>
-                        <TableCell>{log.request.method}</TableCell>
-                        <TableCell className="text-right">{log.timestamp}</TableCell>
-                        <TableCell className="text-right">{log.labnumber.join(", ")}</TableCell>
-                        <TableCell className="text-right">{log.action}</TableCell>
-                        <TableCell className="text-right">{log.response.statusCode}</TableCell>
-                        <TableCell className="text-right">{log.response.message}</TableCell>
-                        <TableCell className="text-right">{log.response.timeMs}</TableCell>
+        <div className='rounded-xl border overflow-hidden'>
+            <Table>
+                <TableHeader className='bg-[#162033]'>
+                    <TableRow className='pointer-events-none'>
+                        <TableHead className='text-[#92a1b6]'>User</TableHead>
+                        <TableHead className='text-[#92a1b6]'>Endpoint</TableHead>
+                        <TableHead className='text-[#92a1b6]'>Method</TableHead>
+                        <TableHead className='text-[#92a1b6]'>Timestamp</TableHead>
+                        <TableHead className='text-[#92a1b6]'>Labnumber</TableHead>
+                        <TableHead className='text-[#92a1b6]'>Action</TableHead>
+                        <TableHead className='text-[#92a1b6]'>Status</TableHead>
+                        <TableHead className='text-[#92a1b6]'>Message</TableHead>
+                        <TableHead className='text-[#92a1b6]'>Time Response</TableHead>
                     </TableRow>
-                ))}
-            </TableBody>
-        </Table>
+                </TableHeader>
+                <TableBody>
+                    {logs && logs.data && logs.data.map((log) => (
+                        <TableRow key={log._id}>
+                            <TableCell className="font-medium text-[#d8dadd]">{formatUserFullName(log.user?.prefix || "", log.user?.firstname || "", log.user?.lastname || "")}</TableCell>
+                            <TableCell className='text-[#637289]'>{log.request.endpoint}</TableCell>
+                            <TableCell>
+                                <div className={`${getMethodColor(log.request.method)}` + ' px-2 py-0.5 rounded-sm w-fit'}>
+                                    <span className={`${getMethodTextColor(log.request.method)}` + ' font-medium text-xs'}>{log.request.method}</span>
+                                </div>
+                            </TableCell>
+                            <TableCell>{formatDateToDisplay(log.timestamp)}</TableCell>
+                            <TableCell>{log.labnumber.join(", ")}</TableCell>
+                            <TableCell className={getActionColor(log.action)}>{log.action}</TableCell>
+                            <TableCell className={getStatusCodeColor(log.response.statusCode)}>{log.response.statusCode}</TableCell>
+                            <TableCell>{log.response.message}</TableCell>
+                            <TableCell>{log.response.timeMs}</TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </div>
     )
 }
 
