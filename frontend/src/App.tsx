@@ -3,21 +3,23 @@ import LogsTable from "./components/LogsTable"
 import Pagination from "./components/Pagination"
 import FiltersPanel from "./components/FiltersPanel";
 import type { LogQueryParams } from "@/types/log.type.ts";
-import { formatDateForApi, parseDateFromApi } from "./utils/date";
+import { formatDateForApi } from "./utils/date";
 
 function App() {
-  const { logs, isLoading: isLoadingLogs, isError, setQueryParams, queryParams } = useFetchLogs();
+  const { logs, isLoading: isLoadingLogs, setQueryParams, queryParams } = useFetchLogs();
 
   const currentPage = logs?.pagination.page ?? 1;
   const totalPages = logs?.pagination.totalPages ?? 1;
 
   const totalLogs = logs?.totalCount ?? 0;
-  const limit = logs?.pagination.limit ?? 50;
+  const limit = queryParams.limit ?? "50";
 
-  const startItem = totalLogs ? (currentPage - 1) * limit + 1 : 0;
-  const endItem = Math.min(currentPage * limit, totalLogs);
+  const startItem = totalLogs ? (currentPage - 1) * Number(limit) + 1 : 0;
+  const endItem = Math.min(currentPage * Number(limit), totalLogs);
 
   const isEmpty = !logs || !logs.data || logs.data.length === 0;
+  const sortBy = queryParams.sortBy;
+  const sortOrder = queryParams.sortOrder;
 
   const handleFilterChange = (newFilters: LogQueryParams) => {
     console.log("Applying new filters:", newFilters);
@@ -31,6 +33,10 @@ function App() {
     });
   }
 
+  const clearFilters = () => {
+    setQueryParams({});
+  }
+
   return (
     <div className="p-8 bg-[#101922] min-h-screen flex flex-col gap-4">
       <FiltersPanel
@@ -42,8 +48,16 @@ function App() {
         onLabNumberChange={(labNumber) => handleFilterChange({ labNumber })}
         onMinResponseTimeChange={(minResponseTime) => handleFilterChange({ minResponseTime: minResponseTime })}
         onMaxResponseTimeChange={(maxResponseTime) => handleFilterChange({ maxResponseTime: maxResponseTime })}
+        clearFilters={clearFilters}
       />
-      <LogsTable logs={logs} isLoading={isLoadingLogs} isEmpty={isEmpty} />
+      <LogsTable
+        logs={logs}
+        isLoading={isLoadingLogs}
+        isEmpty={isEmpty}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSortChange={(sortBy, sortOrder) => handleFilterChange({ sortBy, sortOrder })}
+        />
 
       <Pagination
         page={currentPage}

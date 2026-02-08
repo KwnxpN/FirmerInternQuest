@@ -28,8 +28,8 @@ export interface LogQueryParams {
   maxResponseTime?: string;
   labNumber?: string;
   page?: number;
-  limit?: number;
-  sortBy?: "timestamp" | "timeMs" | "action";
+  limit?: string;
+  sortBy?: "timestamp" | "timeMs" | "action" | "";
   sortOrder?: "asc" | "desc";
 }
 

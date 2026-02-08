@@ -1,15 +1,14 @@
-import { useMemo, useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { ChevronLeft, ChevronsLeft, ChevronRight, ChevronsRight } from 'lucide-react';
-import debounce from 'lodash.debounce';
+import { useDebouncedInput } from '@/lib/utils';
 
 interface PaginationProps {
     page: number;
     totalPages: number;
     onPageChange: (page: number) => void;
-    onLimitChange: (newLimit: number) => void;
-    limit?: number;
+    onLimitChange: (newLimit: string) => void;
+    limit?: string;
     startItem: number;
     endItem: number;
     totalItems: number;
@@ -22,40 +21,21 @@ function Pagination({
     totalPages,
     onPageChange,
     onLimitChange,
+    limit,
     startItem,
     endItem,
     totalItems,
     isLoading,
     isEmpty
 }: PaginationProps) {
-    const [searchLimit, setSearchLimit] = useState(endItem - startItem + 1);
 
-    const debouncedOnLimitChange = useMemo(
-        () =>
-            debounce((value: number) => {
-                onLimitChange(value);
-            }, 700),
-        [onLimitChange]
-    );
-
-    useEffect(() => {
-        return () => {
-            debouncedOnLimitChange.cancel();
-        };
-    }, [debouncedOnLimitChange]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = Number(e.target.value);
-        setSearchLimit(value);
-
-        if (!isNaN(value) && value > 0) {
-            debouncedOnLimitChange(value);
-        }
-
-        else {
-            debouncedOnLimitChange(50); // Default to 50 if invalid
-        }
-    };
+    const {
+        value: searchLimit,
+        handleChange: handleLimitChange,
+    } = useDebouncedInput({
+        initialValue: limit || String(endItem - startItem + 1),
+        onChange: onLimitChange,
+    });
 
     return (
         <div className='border border-[#1e293b] bg-[#162033] text-[#92a1b6] p-4 rounded-md flex justify-between items-center'>
@@ -71,7 +51,7 @@ function Pagination({
 
             <div className="flex items-center gap-2">
                 <label htmlFor="limit">Rows per page</label>
-                <Input id="limit" type="number" className='w-24' disabled={isLoading} value={searchLimit} onChange={handleChange} />
+                <Input id="limit" type="number" className='w-24' disabled={isLoading} value={searchLimit} onChange={handleLimitChange} />
 
                 <Button
                     variant="secondary"

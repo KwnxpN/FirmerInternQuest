@@ -59,7 +59,7 @@ export function DateRangePicker({
             <PopoverTrigger asChild>
                 <Button
                     id="date-range-picker-button"
-                    className="border border-[#1e293b] justify-start px-2.5 font-normal w-90 bg-[#1e293b] text-[#92a1b6] hover:bg-[#1b2738] hover:text-[#808ea1]"
+                    className="border border-[#1e293b] justify-start px-2.5 font-normal w-full bg-[#1e293b] text-[#92a1b6] hover:bg-[#1b2738] hover:text-[#808ea1]"
                 >
                     <CalendarIcon className="mr-2 h-4 w-4 text-[#137fec]" />
                     {startDate ? (

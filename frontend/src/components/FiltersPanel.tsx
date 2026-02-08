@@ -9,6 +9,7 @@ import type { User } from '@/types/user.type';
 import type { LogQueryParams } from "@/types/log.type.ts";
 
 import { Input } from './ui/input';
+import { Button } from './ui/button';
 import { useDebouncedInput } from '@/lib/utils';
 import { parseDateFromApi } from '@/utils/date';
 
@@ -21,6 +22,7 @@ interface FiltersPanelProps {
     onLabNumberChange: (labNumber: string) => void;
     onMinResponseTimeChange: (minResponseTime: string) => void;
     onMaxResponseTimeChange: (maxResponseTime: string) => void;
+    clearFilters: () => void;
 }
 
 function FiltersPanel({
@@ -31,7 +33,8 @@ function FiltersPanel({
     onStatusCodeChange,
     onLabNumberChange,
     onMinResponseTimeChange,
-    onMaxResponseTimeChange
+    onMaxResponseTimeChange,
+    clearFilters
 }: FiltersPanelProps) {
 
     const [selectedActions, setSelectedActions] = useState<string[]>(logsQueryParams.action || []);
@@ -72,6 +75,12 @@ function FiltersPanel({
         onChange: onMaxResponseTimeChange,
     });
 
+    const handleClearFilters = () => {
+        setSelectedActions([]);
+        setSelectedUsers([]);
+        clearFilters();
+    }
+
     return (
         <div className='bg-[#0f172a] border border-[#1e293b] rounded-md p-4 flex flex-col gap-4'>
             <div className='flex gap-2'>
@@ -89,7 +98,7 @@ function FiltersPanel({
                     <Input id='lab-number' value={labNumber} onChange={handleLabNumberChange} placeholder="Lab Number"
                         className='text-white border border-[#334155] rounded-md px-3 py-2' />
                 </div>
-                <div className='flex flex-col gap-2'>
+                <div className='flex-2 flex flex-col gap-2'>
                     <label htmlFor="min-response-time" className='text-[#94a3b8] font-bold'>Response Time Range (ms)</label>
                     <div className='flex gap-2'>
                         <Input id='min-response-time' value={minResponseTime} onChange={handleMinResponseTimeChange} placeholder="Min Response Time (ms)"
@@ -108,16 +117,23 @@ function FiltersPanel({
                 }}
                 placeholder="Select Actions"
             />
-            <MultiSelect
-                options={users ? users.data.map((user: User) => ({ label: formatUserFullName(user.prefix, user.firstname, user.lastname), value: user._id })) : []}
-                selected={selectedUsers}
-                onChange={(users) => {
-                    setSelectedUsers(users);
-                    onUserChange(users);
-                }}
-                placeholder="Select Users"
-                disabled={isLoadingUsers || isErrorUsers}
-            />
+            <div className='flex gap-2'>
+                <div className='w-full'>
+                    <MultiSelect
+                        options={users ? users.data.map((user: User) => ({ label: formatUserFullName(user.prefix, user.firstname, user.lastname), value: user._id })) : []}
+                        selected={selectedUsers}
+                        onChange={(users) => {
+                            setSelectedUsers(users);
+                            onUserChange(users);
+                        }}
+                        placeholder="Select Users"
+                        disabled={isLoadingUsers || isErrorUsers}
+                    />
+                </div>
+                {logsQueryParams && Object.keys(logsQueryParams).length > 0 && (selectedActions.length > 0 || selectedUsers.length > 0) && (
+                    <Button className="text-sm text-[#f87171] underline" onClick={handleClearFilters}>Clear All Filters</Button>
+                )}
+            </div>
         </div>
     )
 }

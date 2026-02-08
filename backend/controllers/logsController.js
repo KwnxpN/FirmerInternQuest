@@ -125,7 +125,7 @@ function buildPagination(page, limit) {
 }
 
 function buildSort(sortBy, sortOrder) {
-  if (sortBy) {
+  if (sortBy && sortBy !== '') {
     const order = sortOrder === 'desc' ? -1 : 1;
     if (sortBy === 'timeMs') {
       return { 'response.timeMs': order };
