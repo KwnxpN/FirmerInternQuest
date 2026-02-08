@@ -20,7 +20,7 @@ connectDB();
 app.use(cookieParser());
 app.use(express.json());
 app.use(cors({
-  origin: process.env.CORS_ORING_LOCAL_NGINX,
+  origin: process.env.CORS_ORIGIN_LOCAL_NGINX,
   origin: process.env.CORS_ORIGIN_LOCAL,
   origin: process.env.CORS_ORIGIN,
   credentials: true,
