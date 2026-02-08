@@ -24,8 +24,8 @@ export interface LogQueryParams {
   endDate?: string;
   userId?: string[];
   statusCode?: string;
-  minResponseTime?: number;
-  maxResponseTime?: number;
+  minResponseTime?: string;
+  maxResponseTime?: string;
   labNumber?: string;
   page?: number;
   limit?: number;

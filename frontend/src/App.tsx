@@ -34,11 +34,14 @@ function App() {
   return (
     <div className="p-8 bg-[#101922] min-h-screen flex flex-col gap-4">
       <FiltersPanel
-        startDate={queryParams.startDate ? parseDateFromApi(queryParams.startDate) : null}
-        endDate={queryParams.endDate ? parseDateFromApi(queryParams.endDate) : null}
+        logsQueryParams={queryParams}
         onDateChange={(start, end) => handleFilterChange({ startDate: formatDateForApi(start), endDate: formatDateForApi(end) })}
         onActionChange={(actions) => handleFilterChange({ action: actions })}
         onUserChange={(users) => handleFilterChange({ userId: users })}
+        onStatusCodeChange={(statusCode) => handleFilterChange({ statusCode })}
+        onLabNumberChange={(labNumber) => handleFilterChange({ labNumber })}
+        onMinResponseTimeChange={(minResponseTime) => handleFilterChange({ minResponseTime: minResponseTime })}
+        onMaxResponseTimeChange={(maxResponseTime) => handleFilterChange({ maxResponseTime: maxResponseTime })}
       />
       <LogsTable logs={logs} isLoading={isLoadingLogs} isEmpty={isEmpty} />
 

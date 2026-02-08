@@ -2,6 +2,8 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import type { LogQueryParams } from "../types/log.type"
 import { formatDateForApi, getDefaultStartDate, getDefaultEndDate } from "@/utils/date"
+import { useEffect, useMemo, useState } from "react";
+import debounce from "lodash.debounce";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -92,4 +94,44 @@ export function getInitialQueryParams(): LogQueryParams {
   } catch {
     return {};
   }
+}
+
+type UseDebouncedInputParams = {
+    initialValue?: string | number;
+    delay?: number;
+    onChange?: (value: string) => void;
+};
+
+export function useDebouncedInput({
+    initialValue = "",
+    delay = 700,
+    onChange,
+}: UseDebouncedInputParams) {
+    const [value, setValue] = useState(initialValue.toString());
+
+    const debouncedChange = useMemo(
+        () =>
+            debounce((nextValue: string) => {
+                onChange?.(nextValue);
+            }, delay),
+        [onChange, delay]
+    );
+
+    useEffect(() => {
+        return () => {
+            debouncedChange.cancel();
+        };
+    }, [debouncedChange]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const nextValue = e.target.value;
+        setValue(nextValue);
+        debouncedChange(nextValue.trim());
+    };
+
+    return {
+        value,
+        handleChange,
+        setValue,
+    };
 }
