@@ -36,7 +36,7 @@ export const useFetchLogs = () => {
         fetchLogs();
     }, [queryParams]);
 
-    return { logs, isLoading, isError, setQueryParams };
+    return { logs, isLoading, isError, queryParams, setQueryParams };
 }
 
 export const useFetchUsers = () => {

@@ -20,17 +20,18 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import type { LogResponse } from '@/types/log.type';
+import { LoaderCircle } from "lucide-react";
 
 interface LogsTableProps {
-  logs: LogResponse | null;
-  isLoading: boolean;
+    logs: LogResponse | null;
+    isLoading: boolean;
 }
 
 function LogsTable({ logs, isLoading }: LogsTableProps) {
 
     return (
         <div className='rounded-xl border overflow-hidden  relative'>
-            <div className="overflow-y-auto max-h-[70vh]">
+            <div className="overflow-y-auto h-[70vh]">
                 <Table className='border-separate border-spacing-0'>
                     <TableHeader className='h-16'>
                         <TableRow className='pointer-events-none'>
@@ -46,9 +47,20 @@ function LogsTable({ logs, isLoading }: LogsTableProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {logs && logs.data && logs.data.map((log) => (
-                            <TableRow key={log._id} className='h-16'>
-                                <TableCell className="font-medium text-[#d8dadd] pl-4">
+                        {isLoading && (
+                            <TableRow className="pointer-events-none">
+                                <TableCell colSpan={9} className='h-[63vh] text-center text-[#637289]'>
+                                    <div className="flex justify-center mt-4">
+                                        <span>Please wait, we are getting logs data for you</span>
+                                        <LoaderCircle className="animate-spin text-[#637289] ml-2" />
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        )}
+
+                        {!isLoading && logs && logs.data && logs.data.map((log) => (
+                            <TableRow key={log._id} className='h-16 hover:bg-[#1b2738]'>
+                                <TableCell className="text-xs font-medium text-[#d8dadd] pl-4">
                                     {formatUserFullName(log.user?.prefix || "", log.user?.firstname || "", log.user?.lastname || "")}
                                 </TableCell>
                                 <TableCell className='text-[#637289]'>{log.request.endpoint}</TableCell>
@@ -62,7 +74,7 @@ function LogsTable({ logs, isLoading }: LogsTableProps) {
                                 </TableCell>
                                 <TableCell className='text-[#637289] whitespace-break-spaces'>{formatDateToDisplay(log.timestamp)}</TableCell>
                                 <TableCell className="text-[#137fec] whitespace-normal">
-                                    <div className="columns-4 gap-4">
+                                    <div className="columns-3 gap-2 text-xs">
                                         {log.labnumber.join(", ")}
                                     </div>
                                 </TableCell>
