@@ -6,7 +6,7 @@ import type { UserResponse } from "./types/user.type.ts";
 import { buildUrlSearchParams, getInitialQueryParams } from "./lib/utils.ts";
 import { useAuth } from "./hooks/useAuth.ts";
 
-const API_BASE_URL = "http://localhost:5001/api";
+const API_BASE_URL = "/api";
 export const api = axios.create({
     baseURL: API_BASE_URL,
     withCredentials: true,
