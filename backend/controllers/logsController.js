@@ -286,7 +286,7 @@ export async function getAllLogs(req, res) {
       pagination: {
         page: pagination.page,
         limit: pagination.limit,
-        totalPages: Math.ceil(totalCount / pagination.limit),
+        totalPages: totalCount ? Math.ceil(totalCount / pagination.limit) : 1,
         hasNext: pagination.page * pagination.limit < totalCount,
         hasPrev: pagination.page > 1,
       },

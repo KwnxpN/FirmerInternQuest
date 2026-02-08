@@ -14,6 +14,7 @@ interface PaginationProps {
     endItem: number;
     totalItems: number;
     isLoading?: boolean;
+    isEmpty?: boolean;
 }
 
 function Pagination({
@@ -25,6 +26,7 @@ function Pagination({
     endItem,
     totalItems,
     isLoading,
+    isEmpty
 }: PaginationProps) {
     const [searchLimit, setSearchLimit] = useState(endItem - startItem + 1);
 
@@ -73,7 +75,7 @@ function Pagination({
 
                 <Button
                     variant="secondary"
-                    disabled={page === 1 || isLoading}
+                    disabled={page === 1 || isLoading || isEmpty}
                     onClick={() => onPageChange(1)}
                 >
                     <ChevronsLeft />
@@ -81,7 +83,7 @@ function Pagination({
                 </Button>
 
                 <Button
-                    disabled={page === 1 || isLoading}
+                    disabled={page === 1 || isLoading || isEmpty}
                     onClick={() => onPageChange(page - 1)}
                 >
                     <ChevronLeft />
@@ -93,7 +95,7 @@ function Pagination({
                 </span>
 
                 <Button
-                    disabled={page === totalPages || isLoading}
+                    disabled={page === totalPages || isLoading || isEmpty}
                     onClick={() => onPageChange(page + 1)}
                 >
                     Next
@@ -102,7 +104,7 @@ function Pagination({
 
                 <Button
                     variant="secondary"
-                    disabled={page === totalPages || isLoading}
+                    disabled={page === totalPages || isLoading || isEmpty}
                     onClick={() => onPageChange(totalPages)}
                 >
                     Last

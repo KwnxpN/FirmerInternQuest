@@ -3,7 +3,7 @@ import axios from "axios";
 import type { LogQueryParams, LogResponse } from "./types/log.type.ts";
 import type { UserResponse } from "./types/user.type.ts";
 
-import { buildUrlSearchParams } from "./lib/utils.ts";
+import { buildUrlSearchParams, getInitialQueryParams } from "./lib/utils.ts";
 
 const API_BASE_URL = "http://localhost:5001/api";
 
@@ -11,7 +11,9 @@ export const useFetchLogs = () => {
     const [logs, setLogs] = useState<LogResponse | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isError, setIsError] = useState(false);
-    const [queryParams, setQueryParams] = useState<LogQueryParams>({});
+    const [queryParams, setQueryParams] = useState<LogQueryParams>(
+        getInitialQueryParams(),
+    );
 
     useEffect(() => {
         const fetchLogs = async () => {
@@ -23,8 +25,10 @@ export const useFetchLogs = () => {
                 const response = await axios.get<LogResponse>(`${API_BASE_URL}/logs?${searchParams.toString()}`);
 
                 setLogs(response.data);
+                localStorage.setItem("logsQueryParams", JSON.stringify(queryParams));
+
                 console.log("Fetched logs:", response.data);
-                console.log("Using query params:", searchParams.toString());
+                console.log("Using query params:", queryParams);
             } catch (error) {
                 setIsError(true);
                 console.error("Error fetching logs:", error);

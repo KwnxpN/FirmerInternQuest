@@ -60,7 +60,7 @@ export function DateRangePicker({
                 <Button
                     variant="outline"
                     id="date-range-picker-button"
-                    className="justify-start px-2.5 font-normal w-90 bg-[#162033] text-white hover:bg-[#1b2738] hover:text-[#92a1b6]"
+                    className="justify-start px-2.5 font-normal w-90 bg-[#162033] text-[#92a1b6] hover:bg-[#1b2738] hover:text-[#808ea1]"
                 >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {startDate ? (

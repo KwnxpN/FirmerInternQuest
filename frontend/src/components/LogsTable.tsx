@@ -25,9 +25,10 @@ import { LoaderCircle } from "lucide-react";
 interface LogsTableProps {
     logs: LogResponse | null;
     isLoading: boolean;
+    isEmpty?: boolean;
 }
 
-function LogsTable({ logs, isLoading }: LogsTableProps) {
+function LogsTable({ logs, isLoading, isEmpty }: LogsTableProps) {
 
     return (
         <div className='rounded-xl border overflow-hidden  relative'>
@@ -53,6 +54,16 @@ function LogsTable({ logs, isLoading }: LogsTableProps) {
                                     <div className="flex justify-center mt-4">
                                         <span>Please wait, we are getting logs data for you</span>
                                         <LoaderCircle className="animate-spin text-[#637289] ml-2" />
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        )}
+
+                        {isEmpty && (
+                            <TableRow className="pointer-events-none">
+                                <TableCell colSpan={9} className='h-[63vh] text-center text-[#637289]'>
+                                    <div className="flex justify-center mt-4">
+                                        <span>Not found any logs, try change your filters.</span>
                                     </div>
                                 </TableCell>
                             </TableRow>
