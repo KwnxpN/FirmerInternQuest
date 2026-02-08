@@ -33,12 +33,13 @@ function Login() {
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+        e.stopPropagation();
 
         setError("");
         setLoadingLogin(true);
 
         try {
-            await login(username, password);
+            await login(username.trim(), password.trim());
         } catch (error) {
             setError("Invalid username or password");
             console.error("Login error:", error);
@@ -75,7 +76,7 @@ function Login() {
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
                                 <InputGroupAddon align="inline-end">
-                                    <InputGroupButton variant="ghost" onClick={() => setShowPassword(!showPassword)} className="hover:bg-[#162033]">
+                                    <InputGroupButton type="button" variant="ghost" onClick={() => setShowPassword(!showPassword)} className="hover:bg-[#162033]">
                                         {showPassword ? <EyeOff className="text-white" /> : <Eye className="text-white" />}
                                     </InputGroupButton>
                                 </InputGroupAddon>
@@ -84,7 +85,7 @@ function Login() {
 
                         {error && <div className="text-red-500 mt-2">{error}</div>}
 
-                        <Button type="submit" disabled={loadingLogin} className="w-full mt-6 bg-[#137fec] hover:bg-[#0e5edb]">
+                        <Button type="submit" disabled={loadingLogin} className="w-full mt-6 bg-[#137fec] hover:bg-[#0e5edb] disabled:opacity-50">
                             {loadingLogin ? "Logging in..." : "Login"}
                         </Button>
                     </form>

@@ -42,7 +42,7 @@ function Logs() {
     return (
         <>
             <Navbar />
-            <div className="p-8 bg-[#101922] min-h-screen flex flex-col gap-4">
+            <div className="p-8 pt-4 bg-[#101922] min-h-screen flex flex-col gap-4">
                 <FiltersPanel
                     logsQueryParams={queryParams}
                     onDateChange={(start, end) => handleFilterChange({ startDate: formatDateForApi(start), endDate: formatDateForApi(end) })}

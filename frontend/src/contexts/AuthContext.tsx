@@ -41,12 +41,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } catch (error) {
             setUser(null);
             console.error('Login failed', error);
+            throw error;
         }
     };
 
     const logout = async () => {
         try {
             await api.post('/auth/logout');
+            localStorage.removeItem('logsQueryParams');
         } catch (error) {
             console.error('Logout failed', error);
         } finally {

@@ -32,8 +32,6 @@ export const useFetchLogs = () => {
                 setLogs(response.data);
                 localStorage.setItem("logsQueryParams", JSON.stringify(queryParams));
 
-                console.log("Fetched logs:", response.data);
-                console.log("Using query params:", queryParams);
             } catch (error) {
                 setIsError(true);
                 console.error("Error fetching logs:", error);
@@ -69,6 +67,7 @@ export const useFetchUsers = () => {
             } catch (error) {
                 setIsError(true);
                 console.error("Error fetching users:", error);
+                throw error;
             }
             setIsLoading(false);
         };
