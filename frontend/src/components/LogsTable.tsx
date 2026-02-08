@@ -31,7 +31,7 @@ interface LogsTableProps {
 function LogsTable({ logs, isLoading, isEmpty }: LogsTableProps) {
 
     return (
-        <div className='rounded-xl border overflow-hidden  relative'>
+        <div className='rounded-xl border border-[#1e293b] overflow-hidden  relative'>
             <div className="overflow-y-auto h-[70vh]">
                 <Table className='border-separate border-spacing-0'>
                     <TableHeader className='h-16'>
@@ -49,7 +49,7 @@ function LogsTable({ logs, isLoading, isEmpty }: LogsTableProps) {
                     </TableHeader>
                     <TableBody>
                         {isLoading && (
-                            <TableRow className="pointer-events-none">
+                            <TableRow className="pointer-events-none bg-[#0f172a]">
                                 <TableCell colSpan={9} className='h-[63vh] text-center text-[#637289]'>
                                     <div className="flex justify-center mt-4">
                                         <span>Please wait, we are getting logs data for you</span>
@@ -60,7 +60,7 @@ function LogsTable({ logs, isLoading, isEmpty }: LogsTableProps) {
                         )}
 
                         {isEmpty && (
-                            <TableRow className="pointer-events-none">
+                            <TableRow className="pointer-events-none bg-[#0f172a]">
                                 <TableCell colSpan={9} className='h-[63vh] text-center text-[#637289]'>
                                     <div className="flex justify-center mt-4">
                                         <span>Not found any logs, try change your filters.</span>
@@ -70,7 +70,7 @@ function LogsTable({ logs, isLoading, isEmpty }: LogsTableProps) {
                         )}
 
                         {!isLoading && logs && logs.data && logs.data.map((log) => (
-                            <TableRow key={log._id} className='h-16 hover:bg-[#1b2738]'>
+                            <TableRow key={log._id} className='h-16 hover:bg-[#1b2738] bg-[#0f172a]'>
                                 <TableCell className="text-xs font-medium text-[#d8dadd] pl-4">
                                     {formatUserFullName(log.user?.prefix || "", log.user?.firstname || "", log.user?.lastname || "")}
                                 </TableCell>

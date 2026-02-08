@@ -58,7 +58,7 @@ function Pagination({
     };
 
     return (
-        <div className='bg-[#162033] text-[#92a1b6] p-4 rounded-md flex justify-between items-center'>
+        <div className='border border-[#1e293b] bg-[#162033] text-[#92a1b6] p-4 rounded-md flex justify-between items-center'>
 
             <p className="text-sm text-slate-400">
                 Showing <span className="font-semibold text-slate-200">{startItem}</span> to{" "}

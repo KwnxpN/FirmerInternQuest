@@ -58,11 +58,10 @@ export function DateRangePicker({
         <Popover>
             <PopoverTrigger asChild>
                 <Button
-                    variant="outline"
                     id="date-range-picker-button"
-                    className="justify-start px-2.5 font-normal w-90 bg-[#162033] text-[#92a1b6] hover:bg-[#1b2738] hover:text-[#808ea1]"
+                    className="border border-[#1e293b] justify-start px-2.5 font-normal w-90 bg-[#1e293b] text-[#92a1b6] hover:bg-[#1b2738] hover:text-[#808ea1]"
                 >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    <CalendarIcon className="mr-2 h-4 w-4 text-[#137fec]" />
                     {startDate ? (
                         endDate ? (
                             <>
@@ -78,7 +77,7 @@ export function DateRangePicker({
                 </Button>
             </PopoverTrigger>
 
-            <PopoverContent className="w-auto p-0 bg-[#162033] text-white" align="start">
+            <PopoverContent className="w-auto p-0 bg-[#162033] text-white border border-[#334561]" align="start">
                 <Calendar
                     mode="range"
                     defaultMonth={startDate ?? new Date()}
@@ -88,7 +87,7 @@ export function DateRangePicker({
                 />
 
                 {/* Time Pickers */}
-                <div className="flex gap-4 border-t p-3">
+                <div className="flex gap-4 border-t border-[#334561] p-3">
                     <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-white" />
                         <label className="text-sm">Start</label>
@@ -102,7 +101,7 @@ export function DateRangePicker({
                                     endDate,
                                 );
                             }}
-                            className="border rounded px-2 py-1 text-sm"
+                            className="border border-[#334561] rounded px-2 py-1 text-sm"
                         />
                     </div>
 
@@ -119,7 +118,7 @@ export function DateRangePicker({
                                     applyTime(endDate, e.target.value),
                                 );
                             }}
-                            className="border rounded px-2 py-1 text-sm"
+                            className="border border-[#334561] rounded px-2 py-1 text-sm"
                         />
                     </div>
                 </div>

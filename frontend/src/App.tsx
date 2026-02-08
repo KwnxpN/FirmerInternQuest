@@ -37,6 +37,7 @@ function App() {
         startDate={queryParams.startDate ? parseDateFromApi(queryParams.startDate) : null}
         endDate={queryParams.endDate ? parseDateFromApi(queryParams.endDate) : null}
         onDateChange={(start, end) => handleFilterChange({ startDate: formatDateForApi(start), endDate: formatDateForApi(end) })}
+        onActionChange={(actions) => handleFilterChange({ action: actions })}
       />
       <LogsTable logs={logs} isLoading={isLoading} isEmpty={isEmpty} />
       <Pagination
