@@ -6,9 +6,8 @@ import type { UserResponse } from "./types/user.type.ts";
 import { buildUrlSearchParams, getInitialQueryParams } from "./lib/utils.ts";
 import { useAuth } from "./hooks/useAuth.ts";
 
-const API_BASE_URL = "https://firmer-intern-quest.vercel.app/api";
 export const api = axios.create({
-    baseURL: API_BASE_URL,
+    baseURL: import.meta.env.VITE_API_BASE_URL,
     withCredentials: true,
 });
 
