@@ -65,5 +65,5 @@ export const useFetchUsers = () => {
         fetchUsers();
     }, []);
 
-    return [{ users, isLoading, isError }];
+    return { users, isLoading, isError };
 }

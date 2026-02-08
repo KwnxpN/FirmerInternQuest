@@ -6,7 +6,7 @@ import type { LogQueryParams } from "@/types/log.type.ts";
 import { formatDateForApi, parseDateFromApi } from "./utils/date";
 
 function App() {
-  const { logs, isLoading, isError, setQueryParams, queryParams } = useFetchLogs();
+  const { logs, isLoading: isLoadingLogs, isError, setQueryParams, queryParams } = useFetchLogs();
 
   const currentPage = logs?.pagination.page ?? 1;
   const totalPages = logs?.pagination.totalPages ?? 1;
@@ -38,8 +38,10 @@ function App() {
         endDate={queryParams.endDate ? parseDateFromApi(queryParams.endDate) : null}
         onDateChange={(start, end) => handleFilterChange({ startDate: formatDateForApi(start), endDate: formatDateForApi(end) })}
         onActionChange={(actions) => handleFilterChange({ action: actions })}
+        onUserChange={(users) => handleFilterChange({ userId: users })}
       />
-      <LogsTable logs={logs} isLoading={isLoading} isEmpty={isEmpty} />
+      <LogsTable logs={logs} isLoading={isLoadingLogs} isEmpty={isEmpty} />
+
       <Pagination
         page={currentPage}
         totalPages={totalPages}
@@ -49,7 +51,7 @@ function App() {
         startItem={startItem}
         endItem={endItem}
         totalItems={totalLogs}
-        isLoading={isLoading}
+        isLoading={isLoadingLogs}
         isEmpty={isEmpty}
       />
     </div>
