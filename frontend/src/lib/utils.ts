@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import type { LogQueryParams } from "../types/log.type"
+import { formatDateForApi, getDefaultStartDate, getDefaultEndDate } from "@/utils/date"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -16,10 +17,24 @@ export function buildUrlSearchParams(params: LogQueryParams): URLSearchParams {
   if (params.startDate) {
     searchParams.append("startDate", params.startDate);
   }
-  searchParams.append("startDate", "2014-02-02");
+
+  else if (!params.startDate) {
+    const defaultStart = formatDateForApi(getDefaultStartDate());
+
+    if (defaultStart) {
+      searchParams.append("startDate", defaultStart);
+    }
+  }
 
   if (params.endDate) {
     searchParams.append("endDate", params.endDate);
+  }
+
+  else if (!params.endDate) {
+    const defaultEnd = formatDateForApi(getDefaultEndDate());
+    if (defaultEnd) {
+      searchParams.append("endDate", defaultEnd);
+    }
   }
 
   if (params.userId && params.userId.length > 0) {

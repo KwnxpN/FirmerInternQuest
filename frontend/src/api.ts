@@ -24,7 +24,7 @@ export const useFetchLogs = () => {
 
                 setLogs(response.data);
                 console.log("Fetched logs:", response.data);
-                console.log("Using query params:", queryParams);
+                console.log("Using query params:", searchParams.toString());
             } catch (error) {
                 setIsError(true);
                 console.error("Error fetching logs:", error);
