@@ -137,7 +137,7 @@ function buildSort(sortBy, sortOrder) {
   }
 }
 
-function buildQuery(filters) {
+function buildQuery(filters, user) {
   const {
     action,
     startDate,
@@ -165,7 +165,9 @@ function buildQuery(filters) {
     query.action = buildSingleOrInQuery(action);
   }
 
-  if (userId) {
+  if (user && user.level === 'user') {
+    query.userId = new mongoose.Types.ObjectId(user.userId);
+  } else if (userId) {
     query.userId = buildSingleOrInQuery(userId, (id) => new mongoose.Types.ObjectId(id));
   }
 
@@ -233,7 +235,7 @@ export async function getAllLogs(req, res) {
   }
 
   try {
-    const { query, pagination, sort } = buildQuery(req.query);
+    const { query, pagination, sort } = buildQuery(req.query, req.user);
     console.log('Log Query:', query);
     console.log('Pagination:', pagination);
     console.log('Sort:', sort);
