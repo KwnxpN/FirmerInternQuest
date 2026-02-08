@@ -38,13 +38,7 @@ export async function login(req, res) {
     res.json({
         success: true,
         message: 'Login successful',
-        user: {
-            id: user._id,
-            username: user.username,
-            firstname: user.firstname,
-            lastname: user.lastname,
-            level: user.level,
-        }
+        user: { ...user.toObject(), password: undefined }
     })
   } catch (error) {
     return res.status(500).json({ message: 'Server error' });

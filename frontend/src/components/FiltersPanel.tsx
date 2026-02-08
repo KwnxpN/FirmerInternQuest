@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useFetchUsers } from '@/api';
 import { ACTION_ORDER } from '@/constants/actions';
 import { formatUserFullName } from '@/utils/formats';
+import { useAuth } from "@/hooks/useAuth"
 
 import DateRangePicker from './filters/DateRangePicker'
 import MultiSelect from './filters/MultiSelect';
@@ -40,6 +41,7 @@ function FiltersPanel({
     const [selectedActions, setSelectedActions] = useState<string[]>(logsQueryParams.action || []);
     const [selectedUsers, setSelectedUsers] = useState<string[]>(logsQueryParams.userId || []);
     const { users, isLoading: isLoadingUsers, isError: isErrorUsers } = useFetchUsers();
+    const { user: currentUser } = useAuth();
     const parsedStartDate = logsQueryParams.startDate ? parseDateFromApi(logsQueryParams.startDate) : null;
     const parsedEndDate = logsQueryParams.endDate ? parseDateFromApi(logsQueryParams.endDate) : null;
 
@@ -119,20 +121,34 @@ function FiltersPanel({
             />
             <div className='flex gap-2'>
                 <div className='w-full'>
-                    <MultiSelect
-                        options={users ? users.data.map((user: User) => ({ label: formatUserFullName(user.prefix, user.firstname, user.lastname), value: user._id })) : []}
-                        selected={selectedUsers}
-                        onChange={(users) => {
-                            setSelectedUsers(users);
-                            onUserChange(users);
-                        }}
-                        placeholder="Select Users"
-                        disabled={isLoadingUsers || isErrorUsers}
-                    />
+                    {currentUser && currentUser.level === 'admin' && (
+                        <MultiSelect
+                            options={users ? users.data.map((user: User) => ({ label: formatUserFullName(user.prefix, user.firstname, user.lastname), value: user._id })) : []}
+                            selected={selectedUsers}
+                            onChange={(users) => {
+                                setSelectedUsers(users);
+                                onUserChange(users);
+                            }}
+                            placeholder="Select Users"
+                            disabled={isLoadingUsers || isErrorUsers}
+                        />
+                    )}
+
+                    {currentUser && currentUser.level === 'user' && (
+                        <MultiSelect
+                            options={[{ label: formatUserFullName(currentUser.prefix, currentUser.firstname, currentUser.lastname), value: currentUser._id }]}
+                            selected={selectedUsers}
+                            onChange={(users) => {
+                                setSelectedUsers(users);
+                                onUserChange(users);
+                            }}
+                            placeholder="Select Users"
+                            disabled={isLoadingUsers || isErrorUsers}
+                        />
+                    )}
+
                 </div>
-                {logsQueryParams && Object.keys(logsQueryParams).length > 0 && (selectedActions.length > 0 || selectedUsers.length > 0) && (
-                    <Button className="text-sm text-[#f87171] underline" onClick={handleClearFilters}>Clear All Filters</Button>
-                )}
+                <Button className="text-sm text-[#f87171] underline" onClick={handleClearFilters}>Clear All Filters</Button>
             </div>
         </div>
     )
