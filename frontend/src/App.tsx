@@ -3,6 +3,7 @@ import { AuthProvider } from "@/contexts/AuthContext.tsx";
 import { ProtectedRoute } from "@/components/ProtectedRoute.tsx";
 import Login from "@/pages/Login.tsx";
 import Logs from "@/pages/Logs.tsx";
+import { Toaster } from "@/components/ui/sonner"
 
 function App() {
   return (
@@ -22,6 +23,8 @@ function App() {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
+
+      <Toaster position="top-right" richColors />
     </AuthProvider>
   )
 }

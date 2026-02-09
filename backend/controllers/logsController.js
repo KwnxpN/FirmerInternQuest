@@ -223,62 +223,66 @@ function validateQueryParams(query) {
   return null;
 }
 
+// ------ Helper Functions ------
+
+async function fetchLogsData(queryParams, currentUser, isExport = false) {
+  const validationError = validateQueryParams(queryParams);
+  if (validationError) throw new Error(validationError);
+
+  const { query, pagination, sort } = buildQuery(queryParams, currentUser);
+
+  // Define the data pipeline stages
+  const dataStages = [
+    {
+      $addFields: {
+        actionSortIndex: { $indexOfArray: [VALID_ACTIONS, "$action"] },
+      },
+    },
+  ];
+
+  if (sort) dataStages.push({ $sort: sort });
+
+  // Apply pagination only if not exporting
+  if (!isExport) {
+    dataStages.push({ $skip: pagination.skip });
+    dataStages.push({ $limit: pagination.limit });
+  }
+
+  dataStages.push({ $project: { actionSortIndex: 0, userId: 0, "user.password": 0 } });
+
+  const pipeline = [
+    { $match: query },
+    {
+      $lookup: {
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "user",
+      },
+    },
+    { $unwind: { path: "$user", preserveNullAndEmptyArrays: false } },
+    { $match: { "user.isDel": false } },
+    {
+      $facet: {
+        data: dataStages, // Use the dynamically built stages
+        totalCount: [{ $count: "count" }],
+      },
+    },
+  ];
+
+  const result = await Log.aggregate(pipeline);
+  return {
+    logs: result[0].data,
+    totalCount: result[0].totalCount[0]?.count ?? 0,
+    paginationConfig: pagination,
+  };
+}
+
 // ------ Controllers ------
 
 export async function getAllLogs(req, res) {
-  const validationError = validateQueryParams(req.query);
-  if (validationError) {
-    return res.status(400).json({ 
-      success: false,
-      message: validationError
-     });
-  }
-
   try {
-    const { query, pagination, sort } = buildQuery(req.query, req.user);
-    console.log('Log Query:', query);
-    console.log('Pagination:', pagination);
-    console.log('Sort:', sort);
-
-    const pipeline = [
-      { $match: query },
-
-      {
-      $lookup: {
-      from: 'users',
-      localField: 'userId',
-      foreignField: '_id',
-      as: 'user',
-      },
-      },
-      { $unwind: { path: '$user', preserveNullAndEmptyArrays: false } }, // Exclude logs with no user
-      { $match: { 'user.isDel': false } },
-
-      {
-      // Faceted search to get data and total count
-      $facet: {
-        data: [
-        {
-          $addFields: {
-          actionSortIndex: {
-            $indexOfArray: [VALID_ACTIONS, '$action'],
-          },
-          },
-        },
-        ...(sort ? [{ $sort: sort }] : []),
-        { $skip: pagination.skip },
-        { $limit: pagination.limit },
-        { $project: { actionSortIndex: 0, userId: 0, 'user.password': 0 } },
-        ],
-        totalCount: [{ $count: 'count' }],
-      },
-      },
-    ];
-
-    const result = await Log.aggregate(pipeline);
-
-    const logs = result[0].data;
-    const totalCount = result[0].totalCount[0]?.count ?? 0;
+    const { logs, totalCount, paginationConfig } = await fetchLogsData(req.query, req.user);
 
     return res.status(200).json({
       success: true,
@@ -286,20 +290,27 @@ export async function getAllLogs(req, res) {
       totalCount,
       data: logs,
       pagination: {
-        page: pagination.page,
-        limit: pagination.limit,
-        totalPages: totalCount ? Math.ceil(totalCount / pagination.limit) : 1,
-        hasNext: pagination.page * pagination.limit < totalCount,
-        hasPrev: pagination.page > 1,
+        page: paginationConfig.page,
+        limit: paginationConfig.limit,
+        totalPages: totalCount ? Math.ceil(totalCount / paginationConfig.limit) : 1,
+        hasNext: paginationConfig.page * paginationConfig.limit < totalCount,
+        hasPrev: paginationConfig.page > 1,
       },
     });
   } catch (error) {
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: 'Server Error: Unable to retrieve logs',
-        error: error.message,
-      });
+    const status = error.message.includes('Invalid') ? 400 : 500;
+    return res.status(status).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export async function generate(req, res) {
+  try {
+    const { logs, totalCount } = await fetchLogsData(req.query, req.user, true);
+    res.json({ success: true, totalCount, data: logs });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 }

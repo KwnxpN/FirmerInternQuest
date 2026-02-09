@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useFetchUsers } from '@/api';
+import { useFetchUsers, exportLogsData } from '@/api';
 import { ACTION_ORDER } from '@/constants/actions';
 import { formatUserFullName } from '@/utils/formats';
 import { useAuth } from "@/hooks/useAuth"
+import * as XLSX from 'xlsx';
 
 import DateRangePicker from './filters/DateRangePicker'
 import MultiSelect from './filters/MultiSelect';
@@ -11,6 +12,7 @@ import type { LogQueryParams } from "@/types/log.type.ts";
 
 import { Input } from './ui/input';
 import { Button } from './ui/button';
+import { toast } from "sonner"
 import { useDebouncedInput } from '@/lib/utils';
 import { parseDateFromApi } from '@/utils/date';
 
@@ -87,6 +89,54 @@ function FiltersPanel({
         clearFilters();
     }
 
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExport = async () => {
+        setIsExporting(true);
+        try {
+            const exportData = await exportLogsData(logsQueryParams);
+
+            console.log("Export Data:", exportData);
+
+            const flattenedData = exportData.data.map((log) => ({
+                "User": formatUserFullName(log.user.prefix, log.user.firstname, log.user.lastname),
+                "Endpoint": log.request?.endpoint,
+                "Method": log.request?.method,
+                "Timestamp": new Date(log.timestamp).toLocaleString(),
+                "Lab Numbers": log.labnumber?.join(', ') || '',
+                "Action": log.action,
+                "Status": log.response?.statusCode,
+                "Message": log.response?.message,
+                "Response Time (ms)": log.response?.timeMs,
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(flattenedData);
+
+            const colWidths = [
+                { wch: 15 }, // User
+                { wch: 20 }, // Endpoint
+                { wch: 10 }, // Method
+                { wch: 20 }, // Timestamp
+                { wch: 50 }, // Lab Numbers
+                { wch: 15 }, // Action
+                { wch: 10 }, // Status
+                { wch: 30 }, // Message
+                { wch: 10 }, // Response Time (ms)
+            ];
+            worksheet["!cols"] = colWidths;
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Logs");
+            XLSX.writeFile(workbook, `logs_export_${new Date().toISOString()}.xlsx`);
+            toast.success("Logs exported successfully!");
+        } catch (error) {
+            toast.error("Failed to export logs.");
+            console.error("Error exporting logs:", error);
+        } finally {
+            setIsExporting(false);
+        }
+    }
+
     return (
         <div className='bg-[#0f172a] border border-[#1e293b] rounded-md p-4 flex flex-col gap-4'>
             <div className='flex gap-2'>
@@ -152,7 +202,13 @@ function FiltersPanel({
                     )}
 
                 </div>
+
+                <div className='flex justify-end'>
+                <Button className='bg-green-600 hover:bg-green-700 text-white' onClick={handleExport} disabled={isExporting}>
+                    {isExporting ? 'Exporting...' : 'Export CSV'}
+                </Button>
                 <Button className="text-sm text-[#f87171] underline" onClick={handleClearFilters}>Clear All Filters</Button>
+            </div>
             </div>
         </div>
     )

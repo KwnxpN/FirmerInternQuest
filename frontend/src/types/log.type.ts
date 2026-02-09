@@ -48,3 +48,9 @@ export interface LogResponse {
     data: Log[];
     pagination: Pagination;
 }
+
+export interface ExportLogsResponse {
+    success: boolean;
+    totalCount: number;
+    data: Log[]
+}

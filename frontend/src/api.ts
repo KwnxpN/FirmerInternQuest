@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import type { LogQueryParams, LogResponse } from "./types/log.type.ts";
+import type { LogQueryParams, LogResponse, ExportLogsResponse } from "./types/log.type.ts";
 import type { UserResponse } from "./types/user.type.ts";
 
 import { buildUrlSearchParams, getInitialQueryParams } from "./lib/utils.ts";
 import { useAuth } from "./hooks/useAuth.ts";
+
 
 export const api = axios.create({
     baseURL: import.meta.env.PROD
@@ -46,6 +47,20 @@ export const useFetchLogs = () => {
 
     return { logs, isLoading, isError, queryParams, setQueryParams };
 }
+
+export const exportLogsData = async (queryParams: LogQueryParams) => {
+    try {
+        const searchParams = buildUrlSearchParams(queryParams);
+        
+        const response = await api.get<ExportLogsResponse>(`/logs/generate?${searchParams.toString()}`);
+
+        return response.data;
+
+    } catch (error) {
+        console.error("Error fetching export logs:", error);
+        throw error;
+    }
+};
 
 export const useFetchUsers = () => {
     const [users, setUsers] = useState<UserResponse | null>(null);
