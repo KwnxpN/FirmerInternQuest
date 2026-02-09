@@ -80,6 +80,10 @@ function FiltersPanel({
     const handleClearFilters = () => {
         setSelectedActions([]);
         setSelectedUsers([]);
+        handleStatusCodeChange({ target: { value: "" } } as React.ChangeEvent<HTMLInputElement>);
+        handleLabNumberChange({ target: { value: "" } } as React.ChangeEvent<HTMLInputElement>);
+        handleMinResponseTimeChange({ target: { value: "" } } as React.ChangeEvent<HTMLInputElement>);
+        handleMaxResponseTimeChange({ target: { value: "" } } as React.ChangeEvent<HTMLInputElement>);
         clearFilters();
     }
 
