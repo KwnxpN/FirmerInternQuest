@@ -46,13 +46,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const logout = async () => {
+        setUser(null);
+        localStorage.removeItem('logsQueryParams');
+
         try {
             await api.post('/auth/logout');
-            localStorage.removeItem('logsQueryParams');
         } catch (error) {
             console.error('Logout failed', error);
-        } finally {
-            setUser(null);
         }
     };
 

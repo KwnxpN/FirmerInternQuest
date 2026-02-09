@@ -12,7 +12,7 @@ function Navbar() {
 
     const handleLogout = async () => {
         await logout();
-        navigate("/login");
+        navigate("/login", { replace: true });
     }
     return (
         <nav className="sticky top-0 bg-[#101922] p-4 text-white border-b border-[#1e293b] flex justify-between items-center shadow-md">
