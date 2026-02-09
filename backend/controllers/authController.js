@@ -31,7 +31,8 @@ export async function login(req, res) {
     res.cookie('token', token, {
         httpOnly: true,
         secure: true,
-        sameSite: 'None',
+        sameSite: 'none',
+        path: '/',
         maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
@@ -46,11 +47,12 @@ export async function login(req, res) {
 }
 
 export async function logout(req, res) {
-  res.clearCookie('token'), {
+  res.clearCookie('token', {
     httpOnly: true,
     secure: true,
-    sameSite: 'None',
-  };
+    sameSite: 'none',
+    path: '/',
+  });
   res.json({ success: true, message: 'Logout successful' });
 }
 
