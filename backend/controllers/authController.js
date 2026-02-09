@@ -55,6 +55,10 @@ export async function logout(req, res) {
 }
 
 export async function me(req, res) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
     try {
         if (!req.user || !req.user.userId) {
             return res.status(401).json({ message: 'Unauthorized: No user data found' });
