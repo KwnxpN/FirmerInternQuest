@@ -7,7 +7,9 @@ import { buildUrlSearchParams, getInitialQueryParams } from "./lib/utils.ts";
 import { useAuth } from "./hooks/useAuth.ts";
 
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
+    baseURL: import.meta.env.PROD
+        ? import.meta.env.VITE_API_BASE_URL
+        : import.meta.env.VITE_API_BASE_URL_LOCAL,
     withCredentials: true,
 });
 
