@@ -24,7 +24,6 @@ function Logs() {
     const sortOrder = queryParams.sortOrder;
 
     const handleFilterChange = (newFilters: LogQueryParams) => {
-        console.log("Applying new filters:", newFilters);
         setQueryParams((prev) => {
             const updated = { ...prev, ...newFilters };
             // Refresh page if filter changes and it's not just the page parameter

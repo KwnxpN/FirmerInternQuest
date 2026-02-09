@@ -75,9 +75,6 @@ export function buildUrlSearchParams(params: LogQueryParams): URLSearchParams {
     searchParams.append("sortOrder", params.sortOrder);
   }
 
-  const searchParamsJSON = Object.fromEntries(searchParams.entries());
-  console.log("Built URLSearchParams:", searchParamsJSON);
-
   return searchParams;
 }
 

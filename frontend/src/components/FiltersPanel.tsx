@@ -96,8 +96,6 @@ function FiltersPanel({
         try {
             const exportData = await exportLogsData(logsQueryParams);
 
-            console.log("Export Data:", exportData);
-
             const flattenedData = exportData.data.map((log) => ({
                 "User": formatUserFullName(log.user.prefix, log.user.firstname, log.user.lastname),
                 "Endpoint": log.request?.endpoint,

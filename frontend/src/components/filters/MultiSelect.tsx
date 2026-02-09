@@ -37,7 +37,6 @@ export function MultiSelect<T>({
             : [...selected, value];
 
         onChange(nextSelected);
-        console.log("Next selected values:", nextSelected);
     };
 
     const handleClearAll = () => {
